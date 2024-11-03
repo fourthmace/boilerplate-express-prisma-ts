@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whatsapp Instance</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>Whatsapp Instance</h1>
+
+    <div id="card-wraper" class="row mt-5">
+      <div class="col-4">
+        <div id="" class="card">
+          <div class="card-header">intance: <span>_ _ _</span></div>
+          <div class="card-body">
+            <h5 class="card-title">_ _ _</h5>
+            <img class="img-thumbnail" src="" style="width: 100%" />
+            <p class="card-text mt-3">
+              <span class="badge bg-dark">_ _ _</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const base_url = "http://localhost:8181";
+      const token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODNkMGUyN2QtMDdiNy00OTU4LWEyMTktMjAwZDY4NTZkNWUxIiwicm9sZSI6ImFkbWluIiwiZXhwaXJlZCI6MTczMDQ0NDY3OSwiaWF0IjoxNzMwNDQxMDc5fQ.wR9329iEeGVpDVM6UHSglqaacTqgTdmAaEVopn8EHck"
+      const socket = io(base_url, {
+        transports: ["websocket"],
+        auth: {
+          token: token,
+        },
+      });
+
+      fetch(`${base_url}/api/v1/setup_otp/wa/wakeup_instance_admin`, {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          let data = result.data;
+
+          // Fetch - socket
+          socket.on(`instance:${data.instance_id}`, (result) => {
+            document.querySelector(".card-header span").innerHTML =
+              result.data.instance_id;
+            document.querySelector(".card-title").innerHTML =
+              result.data.phone_number;
+            document.querySelector(".img-thumbnail").src = result.data.qr_code;
+
+            const cardTextElement = document.querySelector(".card-text span");
+            if (result.data.status == "qr") {
+              cardTextElement.innerHTML = "QR is ready";
+              cardTextElement.classList.remove("bg-dark");
+              cardTextElement.classList.add("bg-secondary");
+            }
+            if (
+              result.data.status == "ready" ||
+              result.data.status == "authenticated"
+            ) {
+              cardTextElement.innerHTML = "instance is ready";
+              if (result.data.status == "authenticated") {
+                cardTextElement.innerHTML = "instance is authenticated";
+              }
+              cardTextElement.classList.remove("bg-dark");
+              cardTextElement.classList.remove("bg-secondary");
+              cardTextElement.classList.add("bg-success");
+            }
+          });
+        })
+        .catch((error) => console.error(error));
+    </script>
+  </body>
+</html>

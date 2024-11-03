@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRoleEnum {
+  admin
+  user
+}
+
+enum DeliveryMethodEnum {
+  email
+  whatsapp
+  sms
+}
+
+enum DiscountTypeEnum {
+  absolute
+  percentage
+}
+
+enum SubscriptionPackageEnum {
+  welcome
+  paid_plan
+}
+
+enum PaymentStatusEnum {
+  paid
+  refund
+}
+
+model UserRole {
+  user_role_id    String        @id              @db.VarChar(255)
+  name            UserRoleEnum  @unique
+  deleted         Boolean       @default(false)
+  created_user_id String                        @db.VarChar(255)
+  created_at      DateTime      @default(now())
+  updated_user_id String?                       @db.VarChar(255)
+  updated_at      DateTime? 
+  deleted_user_id String?                       @db.VarChar(255)
+  deleted_at      DateTime?
+  users           User[]
+
+  @@map("user_role") // table name 'user_role'
+}
+
+model User {
+  user_id         String   @id              @db.VarChar(255)
+  user_role_id    String                    @db.VarChar(255)
+  email           String?                   @db.VarChar(255)
+  phone_number    String?                   @db.VarChar(255)
+  password        String                    @db.VarChar(255)
+  first_name      String                    @db.VarChar(255)
+  last_name       String                    @db.VarChar(255)
+  is_verify       Boolean  @default(false)
+  deleted         Boolean  @default(false)
+  created_user_id String                    @db.VarChar(255)
+  created_at      DateTime @default(now())
+  updated_user_id String?                   @db.VarChar(255)
+  updated_at      DateTime? 
+  deleted_user_id String?                   @db.VarChar(255)
+  deleted_at      DateTime? 
+  user_role       UserRole @relation(fields: [user_role_id], references: [user_role_id], onDelete: NoAction)
+  otps            Otp[]
+  payments        Payment[]
+  subscriptionPackages UserSubscriptionPackage[]
+
+  @@map("user") // table name 'user'
+}
+
+model Otp {
+  otp_id          String    @id             @db.VarChar(255)
+  user_id         String                    @db.VarChar(255)
+  code            String    @unique         @db.VarChar(255)
+  delivery_method DeliveryMethodEnum
+  expired_at      DateTime
+  is_used         Boolean   @default(false)
+  deleted         Boolean   @default(false)
+  created_user_id String                    @db.VarChar(255)
+  created_at      DateTime  @default(now())
+  updated_user_id String?                   @db.VarChar(255)
+  updated_at      DateTime? 
+  deleted_user_id String?                   @db.VarChar(255)
+  deleted_at      DateTime? 
+  user            User      @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+
+  @@map("otp") // table name 'otp'
+}
+
+model SubscriptionPackage {
+  subscription_package_id String    @id @db.VarChar(255)
+  name                    String    @db.VarChar(255)
+  contact_quota           Int       @default(0)
+  instance_quota          Int       @default(0)
+  price                   Decimal   @default(0)           @db.Decimal(11,2)
+  discount                Decimal   @default(0)           @db.Decimal(11,2)
+  discount_type           DiscountTypeEnum
+  type                    SubscriptionPackageEnum
+  deleted                 Boolean   @default(false)
+  created_user_id         String    @db.VarChar(255)
+  created_at              DateTime  @default(now())
+  updated_user_id         String?   @db.VarChar(255)
+  updated_at              DateTime? 
+  deleted_user_id         String?   @db.VarChar(255)
+  deleted_at              DateTime? 
+  userSubscriptionPackageItem UserSubscriptionPackageItem[]
+
+  @@map("subscription_package") // table name 'subscription_package'
+}
+
+model UserSubscriptionPackage {
+  user_subscription_package_id  String    @id @db.VarChar(255)
+  user_id                       String    @db.VarChar(255)
+  total_contact_quota           Int       @default(0)
+  used_contact_quota            Int       @default(0)
+  total_instance_quota          Int       @default(0)
+  used_instance_quota           Int       @default(0)
+  deleted                       Boolean   @default(false)
+  created_user_id               String    @db.VarChar(255)
+  created_at                    DateTime  @default(now())
+  updated_user_id               String?   @db.VarChar(255)
+  updated_at                    DateTime? 
+  deleted_user_id               String?   @db.VarChar(255)
+  deleted_at                    DateTime? 
+  user                          User      @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+  userSubscriptionPackageItems  UserSubscriptionPackageItem[]
+
+  @@map("user_subscription_package") // table name 'user_subscription_package'
+}
+
+model UserSubscriptionPackageItem {
+  user_subscription_package_item_id String  @id             @db.VarChar(255)
+  user_subscription_package_id      String                  @db.VarChar(255)
+  subscription_package_id           String                  @db.VarChar(255)
+  payment_id                        String                  @db.VarChar(255)
+  contact_quota                     Int     @default(0)
+  instance_quota                    Int     @default(0)
+  price                             Decimal @default(0)     @db.Decimal(11,2)
+  discount                          Decimal @default(0)     @db.Decimal(11,2)
+  discount_type                     DiscountTypeEnum
+  deleted                           Boolean                 @default(false)
+  created_user_id                   String                  @db.VarChar(255)
+  created_at                        DateTime                @default(now())
+  updated_user_id                   String?                 @db.VarChar(255)
+  updated_at                        DateTime? 
+  deleted_user_id                   String?                 @db.VarChar(255)
+  deleted_at                        DateTime? 
+  userSubscriptionPackage           UserSubscriptionPackage @relation(fields: [user_subscription_package_id], references: [user_subscription_package_id], onDelete: NoAction)
+  subscriptionPackage               SubscriptionPackage     @relation(fields: [subscription_package_id], references: [subscription_package_id], onDelete: NoAction)
+  payment                           Payment                 @relation(fields: [payment_id], references: [payment_id], onDelete: NoAction)
+
+  @@map("user_subscription_package_item") // table name 'user_subscription_package_item'
+}
+
+model Payment {
+  payment_id        String    @id               @db.VarChar(255)
+  payment_number    String                      @db.VarChar(255)
+  user_id           String                      @db.VarChar(255)
+  amount            Decimal   @default(0)       @db.Decimal(11,2)
+  discount          Decimal   @default(0)       @db.Decimal(11,2)
+  discount_type     DiscountTypeEnum
+  status            PaymentStatusEnum
+  deleted           Boolean   @default(false)
+  created_user_id   String                      @db.VarChar(255)
+  created_at        DateTime  @default(now())
+  updated_user_id   String?                     @db.VarChar(255)
+  updated_at        DateTime? 
+  deleted_user_id   String?                     @db.VarChar(255)
+  deleted_at        DateTime? 
+  user              User      @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+  userSubscriptionPackageItems UserSubscriptionPackageItem[]
+
+  @@map("payment") // table name 'payment'
+}

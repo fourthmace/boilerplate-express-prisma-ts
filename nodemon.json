@@ -1,0 +1,12 @@
+{
+  "watch": [".env", ".sequelizerc", "src"],
+  "ext": "ts,json",
+  "ignore": [
+    "src/generated/*",
+    "src/migrations/*",
+    "src/seeders/*",
+    ".wwebjs_auth/*",
+    ".wwebjs_cache/*"
+  ],
+  "exec": "ts-node --files ./src/app.ts"
+}
